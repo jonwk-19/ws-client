@@ -12,9 +12,10 @@ export const connectToSeerver = () => {
 
 
 const addListeners = (socket: Socket) => {
+  const messageForm = document.querySelector<HTMLFormElement>('#message-form')!;
+  const messageInput = document.querySelector<HTMLInputElement>('#message-input')!;
+  const messagesUl = document.querySelector<HTMLUListElement>('#messages-ul')!;
   const serverStatusLabel = document.querySelector<HTMLSpanElement>('#server-status')!;
-  // Todo: #clients-ul
-
 
   socket.on('connect', () => {
     console.log('Connected to server');
@@ -34,6 +35,26 @@ const addListeners = (socket: Socket) => {
       li.textContent = client;
       clientsUl.appendChild(li);
     });
+  });
+
+  messageForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const message = messageInput.value.trim();
+    if (message.length > 0) {
+      socket.emit('message-from-client', {
+        id: socket.id,
+        message
+      });
+      messageInput.value = '';
+    }
+  });
+
+  socket.on('message-from-server', (payload: {fullName: string, message:string}) => {
+
+    const li = document.createElement('li');
+    li.innerHTML = `<strong>${payload.fullName}</strong>: ${payload.message}`;
+    messagesUl.appendChild(li);
+    messagesUl.scrollTop = messagesUl.scrollHeight; // Scroll to the bottom
   });
 
 }
